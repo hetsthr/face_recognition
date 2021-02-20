@@ -19,15 +19,25 @@ def getRandomImage(path):
     """function loads a random image from a random folder in our test path"""
     img = cv2.imread(path)
     return img
-
-for i in range(0,50):
+correct = 0
+for i in range(0,399):
     path = 'face_data/test/'+str(i)+'.jpeg'
     input_im = getRandomImage(path)
     input_im = input_im / 255.
     input_im = input_im.reshape(1,96,96,3)
+
     start = time.time()
     res = np.argmax(classifier.predict(input_im, 1, verbose = 0), axis = 1)
     stop = time.time()
-    print("Prediction:",facial_recog_dict[str(res)])
+
+    if ( i <= 199 ):
+        if (facial_recog_dict[str(res)] == "Het"):
+            correct = correct + 1
+    else:
+        if (facial_recog_dict[str(res)] == "Prashant"):
+            correct = correct + 1
+
+    #print("Prediction:",facial_recog_dict[str(res)])
     print("Latency:",stop-start)
 
+print("Accuracy: ",correct/4)
