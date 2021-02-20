@@ -1,3 +1,4 @@
+import tensorflow as tf
 from keras.applications import MobileNet
 from keras.layers import Dense, Dropout, Activation, Flatten, GlobalAveragePooling2D
 from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
@@ -100,4 +101,9 @@ history = model.fit_generator(
         validation_data = validation_generator,
         validation_steps = np.ceil((nb_validation_samples*0.8/batch_size)-1))
 
+# Converting the Model to tflite
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
 
+with open('model.tflite', 'wb') as f:
+    f.write(tflite_model)
