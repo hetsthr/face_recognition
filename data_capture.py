@@ -14,7 +14,7 @@ num = 0
 #%%
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 cap = cv2.VideoCapture(0)
-
+num = 0
 while (num < 200): 
     ret, img = cap.read()
     img = cv2.resize(img, (96,96))
@@ -33,7 +33,7 @@ while (num < 200):
 #        print (x, " ", y, " ", w, " ", h)
 #        cv2.waitKey(10)
     '''
-    file = './face_data/prashant/'+str(num)+'.jpeg'
+    file = './face_data/test/'+str(num)+'.jpeg'
     cv2.imwrite(file, img)
     cv2.imshow('image', img)
     num = num + 1
