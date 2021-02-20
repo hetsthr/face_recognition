@@ -101,9 +101,12 @@ history = model.fit_generator(
         validation_data = validation_generator,
         validation_steps = np.ceil((nb_validation_samples*0.8/batch_size)-1))
 
+model.save("models/MODEL_TF")
+'''
 # Converting the Model to tflite
-converter = tf.lite.TFLiteConverter.from_keras_model(model)
-tflite_model = converter.convert()
+converter = tf.lite.TFLiteConverter.from_saved_model("MODEL_TF")
+tflite_model_no_quant = converter.convert()
 
-with open('model.tflite', 'wb') as f:
-    f.write(tflite_model)
+with open('model_no_quant.tflite', 'wb') as f:
+    f.write(tflite_model_no_quant)
+'''
