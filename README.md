@@ -18,3 +18,6 @@ Train Images: 242
 Validation Images : 158
 
 Test Images : 200
+
+## Current Issues:
+* Segmentation Fault when trying to use tf.lite.TFLiteConverter.from\_saved\_model() on RPi
