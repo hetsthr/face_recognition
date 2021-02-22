@@ -24,7 +24,7 @@ train_datagen = ImageDataGenerator(
 
 validation_datagen = ImageDataGenerator(rescale=1./255)
 
-batch_size = 5
+batch_size = 4
 
 img_rows, img_cols = 96, 96
 
@@ -40,9 +40,10 @@ validation_generator = validation_datagen.flow_from_directory(
         batch_size = batch_size,
         class_mode = 'categorical')
 
-model = MobileNet(weights = 'imagenet',
+model = MobileNet(#weights=None  #uncomment when alpha=0.125
         include_top = False,
-        input_shape = (img_rows, img_cols, 3))
+        input_shape = (img_rows, img_cols, 3),
+        alpha=0.25)
 
 '''
 for (i, layer) in enumerate(model.layers):
@@ -50,7 +51,7 @@ for (i, layer) in enumerate(model.layers):
 '''
 
 for layer in model.layers:
-    layer.trainable = False
+    layer.trainable = True
 
 '''
 for (i, layer) in enumerate(model.layers):
@@ -60,8 +61,8 @@ for (i, layer) in enumerate(model.layers):
 def lw(bottom_model, num_classes):
     top_model = bottom_model.output
     top_model = GlobalAveragePooling2D()(top_model)
-    top_model = Dense(1024, activation='relu')(top_model)
-    top_model = Dense(512, activation='relu')(top_model)
+    #top_model = Dense(1024, activation='relu')(top_model)
+    top_model = Dense(64, activation='relu')(top_model)
     top_model = Dense(num_classes, activation='softmax')(top_model)
     return top_model
 
@@ -77,7 +78,7 @@ checkpoint = ModelCheckpoint("Facial_recogNet.h5",
 
 earlystop = EarlyStopping(monitor = "val_loss",
         min_delta = 0,
-        patience = 3,
+        patience = 7,
         verbose = 1,
         restore_best_weights = True)
 
@@ -87,11 +88,11 @@ model.compile(loss = 'categorical_crossentropy',
         optimizer = RMSprop(lr = 0.001),
         metrics = ['accuracy'])
 
-nb_train_samples = 232
-nb_validation_samples = 128
+nb_train_samples = 242
+nb_validation_samples = 138
 
-epochs = 5
-batch_size = 5
+epochs = 10
+batch_size = 4
 
 history = model.fit_generator(
         train_generator,
@@ -102,11 +103,44 @@ history = model.fit_generator(
         validation_steps = np.ceil((nb_validation_samples*0.8/batch_size)-1))
 
 model.save("models/MODEL_TF")
-'''
+
 # Converting the Model to tflite
-converter = tf.lite.TFLiteConverter.from_saved_model("MODEL_TF")
+# Did not work on RPi when tried for the last time.
+
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
 tflite_model_no_quant = converter.convert()
 
 with open('model_no_quant.tflite', 'wb') as f:
     f.write(tflite_model_no_quant)
-'''
+
+# Converting the model to tflite with quantization
+img_dir = 'face_data/test'
+def rep_data_gen():
+    dataset_list = tf.data.Dataset.list_files(img_dir + '*')
+    for i in range(100):
+        image = next(iter(dataset_list))
+        image = tf.io.read_file(image)
+        image = tf.io.decode_jpeg(image, channels=3)
+        image = tf.image.resize(image, [96, 96])
+        image = tf.cast(image / 255., tf.float32)
+        image = tf.expand_dims(image, 0)
+        yield [image]
+
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+converter.representative_dataset = rep_data_gen
+
+converter.target_spec.supported_types = [tf.int8]
+converter.inference_input_type = tf.uint8
+converter.inference_output_type = tf.uint8
+
+model_quant_tflite = converter.convert()
+
+open('models/model_quant.tflite','wb').write(model_quant_tflite)
+
+#!apt-get update && apt-get -qq install xxd
+!xxd -i models/model_quant.tflite > models/model_data.cc
+
+REPLACE_TEXT = 'models/model_quant.tflite'.replace('/','_').replace('.','_')
+!sed -i 's/'{REPLACE_TEXT}'/g_model/g' 'models/model_data.cc'
+!tail models/model_data.cc
