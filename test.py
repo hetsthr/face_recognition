@@ -1,6 +1,6 @@
 from keras.models import load_model
 
-classifier = load_model('Facial_recogNet.h5')
+classifier = load_model('MobileNet/mobilenet_25_40_none/Facial_recogNet.h5')
 
 import os
 import numpy as np
