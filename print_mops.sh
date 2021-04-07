@@ -1,0 +1,4 @@
+python ops_calculator.py kernel_vs_latency/mobilenet_gray_32_k1.h5
+python ops_calculator.py kernel_vs_latency/mobilenet_gray_32_k2.h5
+python ops_calculator.py kernel_vs_latency/mobilenet_gray_32_k3.h5
+python ops_calculator.py kernel_vs_latency/mobilenet_gray_32_k4.h5
